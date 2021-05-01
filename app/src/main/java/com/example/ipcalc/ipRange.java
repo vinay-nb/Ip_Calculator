@@ -26,6 +26,7 @@ public class ipRange extends AppCompatActivity {
         l1 = findViewById(R.id.l1);
         l2 = findViewById(R.id.l2);
         l3 = findViewById(R.id.l3);
+        /* fetching from main activity */
         ipAddr = MainActivity.getIp();
         System.out.println("Ip address in IP range page "+ipAddr);
         numberOfHostsBits = IpCalculation.getHostsBits();
@@ -48,6 +49,7 @@ public class ipRange extends AppCompatActivity {
         }
         System.out.println("networkip"+" "+"startip"+" "+"endip"+" "+"broadCastIp");
         for(int i=0; i<4; i++) {
+            /* netip calculation */
             System.out.println("Network ip"+i);
             TextView[] tv2 = new TextView[n];
             for (int j=0; j<n; j++) {
@@ -58,6 +60,7 @@ public class ipRange extends AppCompatActivity {
                 tv2[j].append(String.valueOf("\n"));
                 l2.addView(tv2[j]);
             }
+            /* startip calculation */
             for(int x=0; x<n; x++) {
                 startIp[x] = ip[x];
             }
@@ -76,6 +79,7 @@ public class ipRange extends AppCompatActivity {
                 tv[y].append(String.valueOf("\n"));
                 l.addView(tv[y]);
             }
+            /* broadcast p calculation */
             for(int z=0; z<n; z++) {
                 broadCastIp[z] = ip[z];
             }
@@ -114,6 +118,7 @@ public class ipRange extends AppCompatActivity {
                 endIp[z2] = broadCastIp[z2];
             }
             endIp[n-1] -= 1;
+            /* endip calculation */
             TextView[] tv1 = new TextView[n];
             for(int z3=0; z3<n; z3++) {
                 System.out.println(endIp[z3]);

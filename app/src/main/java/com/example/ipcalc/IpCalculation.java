@@ -17,9 +17,8 @@ public class IpCalculation extends AppCompatActivity {
     public static int numberofHostBits;
     public static String ipClass;
 
-    public static int getHostsBits() {
-        return numberOfHosts1;
-    }
+    /* function to get hostbits */
+    public static int getHostsBits() { return numberOfHosts1; }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,12 +36,11 @@ public class IpCalculation extends AppCompatActivity {
 
         ipClass = getClass(ipAddress);
         ip_class.setText(ipClass);
-
+        //getting subnet
         subNet = MainActivity.getSubnet();
         numberofHostBits = getNetmaskBits(subNet);
         System.out.println("total no of bits"+numberofHostBits);
-//        System.out.println(subNet);
-
+        /* getting new netmask */
         newNetMask = getNewNetMask(numberofHostBits);
         System.out.println("new netmask"+newNetMask);
         netmask.setText(Double.toString(newNetMask));
@@ -61,7 +59,7 @@ public class IpCalculation extends AppCompatActivity {
             }
         });
     }
-
+/* function to new netmask */
     private int getNewNetMask(int temp) {
         int newMask = 0;
         if(ipClass == "A") {
@@ -76,6 +74,7 @@ public class IpCalculation extends AppCompatActivity {
         return  newMask;
     }
 
+/* function to netmask bits */
     private int getNetmaskBits(Double subNet) {
         int val;
         for(int i = 1; i<= 10; i++) {
@@ -91,6 +90,7 @@ public class IpCalculation extends AppCompatActivity {
         return 0;
     }
 
+/* function to find ip class */
     private String getClass(String ipAddress) {
         int index = ipAddress.indexOf('.');
         String ipsub = ipAddress.substring(0,index);
@@ -107,6 +107,7 @@ public class IpCalculation extends AppCompatActivity {
             return "E";
     }
 
+/* to find number of host bits */
     private  int getNumberOfHosts(int newNetMask, String ipClass) {
         double ans = 0;
         int val;
