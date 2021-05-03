@@ -13,12 +13,13 @@ public class IpCalculation extends AppCompatActivity {
     Button next;
     public  static String ipAddress, ipAddr;
     public static Double subNet;
-    public static int newNetMask, numberOfHosts, numberOfHosts1;
+    public static int newNetMask, numberOfHosts, numberOfHosts1, newNetMask1;
     public static int numberofHostBits;
     public static String ipClass;
 
     /* function to get hostbits */
     public static int getHostsBits() { return numberOfHosts1; }
+    public static int getNetMask () { return newNetMask1;}
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +56,7 @@ public class IpCalculation extends AppCompatActivity {
             public void onClick(View v) {
                 Intent i = new Intent(IpCalculation.this, ipRange.class);
                 numberOfHosts1 = numberOfHosts;
+                newNetMask1 = newNetMask;
                 startActivity(i);
             }
         });
