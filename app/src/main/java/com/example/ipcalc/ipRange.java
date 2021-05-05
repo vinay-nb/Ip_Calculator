@@ -4,7 +4,10 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import android.Manifest;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,6 +16,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -25,7 +29,10 @@ import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import org.w3c.dom.Document;
+
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -35,6 +42,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
+import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
 
@@ -88,7 +96,11 @@ public class ipRange extends AppCompatActivity {
         download.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                generatePdf(ipAddr, numberOfHostsBits, newNetMask, subNet);
+                try {
+                    generatePdf(ipAddr, numberOfHostsBits, newNetMask, subNet);
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                }
             }
         });
     }
@@ -96,19 +108,34 @@ public class ipRange extends AppCompatActivity {
     private boolean checkPermission() {
         int permission1 = ContextCompat.checkSelfPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE);
         int permission2 = ContextCompat.checkSelfPermission(getApplicationContext(), READ_EXTERNAL_STORAGE);
-        return (permission1 == PackageManager.PERMISSION_GRANTED) && (permission2 == PackageManager.PERMISSION_GRANTED);
+//        int permission3 = ContextCompat.checkSelfPermission(getApplicationContext(), MANAGE_EXTERNAL_STORAGE);
+        return (permission1 == PackageManager.PERMISSION_GRANTED) && (permission2 == PackageManager.PERMISSION_GRANTED) ;
     }
 /* to request permissions */
     private void requestPermissions() {
         ActivityCompat.requestPermissions(this, new String[]{WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
     }
 
-    private void generatePdf(String ipAddr, int numberOfHostsBits, int newNetMask, double subNet) {
+    private void generatePdf(String ipAddr, int numberOfHostsBits, int newNetMask, double subNet) throws FileNotFoundException {
         if (checkPermission() == false) {
             Toast.makeText(getApplicationContext(), "Permisson denied", Toast.LENGTH_SHORT).show();
         } else {
             requestPermissions();
         }
+//        File docFolder = new File(Environment.getExternalStorageDirectory() + "/Documents");
+//        String path = Environment.getExternalStorageDirectory() .getAbsolutePath();
+//        File docFolder= new File(path);
+//        if(!docFolder.exists()) {
+//            docFolder.mkdir();
+//        }
+//
+//        String pdfname ="ipcalc.pdf";
+//
+//        File pdfFile = new File(docFolder, pdfname);
+//        FileOutputStream op = new FileOutputStream(pdfFile);
+//        Document document = new Document(PageSize.A4);
+//        PdfWriter.getInstance(docFolder, op);
+
         PdfDocument pd = new PdfDocument();
         Paint p = new Paint();
 
@@ -161,13 +188,42 @@ public class ipRange extends AppCompatActivity {
 
 
         pd.finishPage(myPage1);
-        File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+//        File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+
+
         try {
-            pd.writeTo(new FileOutputStream(file));
+            if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+                File docFolder = new File(Environment.getExternalStorageDirectory() + "/Documents");
+                String path = Environment.getExternalStorageDirectory() .getAbsolutePath();
+                docFolder = new File(path);
+                if(!docFolder.exists()) {
+                    docFolder.getParentFile().mkdirs();
+                }
+                pd.writeTo(new FileOutputStream(docFolder));
+            } else {
+                ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
         pd.close();
+//        viewPdf();
+    }
+
+    private void viewPdf() {
+        File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        Uri path;
+        path = Uri.fromFile(file);
+
+        Intent pdfIntent = new Intent(Intent.ACTION_VIEW);
+        pdfIntent.setDataAndType(path, "application/pdf");
+        pdfIntent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+        try {
+            startActivity(pdfIntent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Can't read pdf file", Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void calculateRange(int[] ip, int numberOfHostsBits) {
@@ -179,39 +235,24 @@ public class ipRange extends AppCompatActivity {
         System.out.println("networkip"+" "+"startip"+" "+"endip"+" "+"broadCastIp");
         for(int i=0; i<4; i++) {
             /* netip calculation */
-            System.out.println("Network ip"+i);
             Set<String> hash_net = new HashSet<String>();
+            TextView tv_net = new TextView(this);
+            String value1 = " ";
             for (int j=0; j<n; j++) {
                 netIp[j] = ip[j];
-//                System.out.print("network ip"+netIp[i]+".");
-//                TextView tv_net = new TextView(this);
-//                String value = " ";
-//                for(int y12=0; y12<4; y12++) {
-//                    value += netIp[y12]+".";
-//                }
-//                if(hash_net.contains(value)) {
-//                    continue;
-//                } else {
-//                    hash_net.add(value);
-//                }
-//                System.out.print(netIp[j]+".");
-//                System.out.println("string value"+value);
-//                tv_net.setText(value);
-//                tv_net.setGravity(Gravity.CENTER);
-//                tv_net.setTextSize(18);
-//                tv_net.setTextColor(Color.BLACK);
-//                TableRow tr = new TableRow(this);
-//                tr.addView(tv_net);
-//                tablenet1.addView(tr);
-
-                TextView tv_net = new TextView(this);
+                value1 += netIp[j]+".";
+                System.out.println("i value"+i+" "+"j value"+j);
+                System.out.println("String net ip" +value1);
                 System.out.print(netIp[j]+".");
-                tv_net = new TextView(getBaseContext());
-                tv_net.append(String.valueOf(netIp[j]));
-//                tv_net.append(String.valueOf("\n"));
-                tablenet1.addView(tv_net);
-
             }
+            tv_net.setText(value1);
+            tv_net.setGravity(Gravity.CENTER);
+            tv_net.setTextSize(18);
+            tv_net.setTextColor(Color.BLACK);
+            TableRow tr_net = new TableRow(this);
+            tr_net.addView(tv_net);
+            tablenet1.addView(tr_net);
+
             /* startip calculation */
             for(int x=0; x<n; x++) {
                 startIp[x] = ip[x];
@@ -222,10 +263,10 @@ public class ipRange extends AppCompatActivity {
                 startIp[n-2] += 1;
                 startIp[n-1] = 0;
             }
-            System.out.print("Start ip"+i);
+//            System.out.print("Start ip"+i);
             Set<String>  hash_set = new HashSet<String>();
             for(int y=0; y<n; y++) {
-                System.out.print(startIp[y]+".");
+//                System.out.print(startIp[y]+".");
                 TextView tv = new TextView(this);
                 String value = " ";
                 for(int y1=0; y1<4; y1++) {
@@ -236,7 +277,7 @@ public class ipRange extends AppCompatActivity {
                 } else {
                     hash_set.add(value);
                 }
-                System.out.println("string value"+value);
+//                System.out.println("string value"+value);
                 tv.setText(value);
                 tv.setGravity(Gravity.CENTER);
                 tv.setTextSize(18);
@@ -245,7 +286,7 @@ public class ipRange extends AppCompatActivity {
                 tr.addView(tv);
                 table.addView(tr);
             }
-            System.out.println("set values"+hash_set);
+//            System.out.println("set values"+hash_set);
             /* broadcast p calculation */
             for(int z=0; z<n; z++) {
                 broadCastIp[z] = ip[z];
@@ -271,7 +312,7 @@ public class ipRange extends AppCompatActivity {
                 }
             }
 
-            System.out.println("BroadCast ip"+ broadCastIp[i]);
+//            System.out.println("BroadCast ip"+ broadCastIp[i]);
             Set<String> hash_brod = new HashSet<String>();
             for(int z1=0; z1<n; z1++) {
                 TextView tv_brod = new TextView(this);
@@ -284,8 +325,9 @@ public class ipRange extends AppCompatActivity {
                 } else {
                     hash_brod.add(value);
                 }
-                System.out.print(broadCastIp[z1]+".");
-                System.out.println("string value"+value);
+//                System.out.print(broadCastIp[z1]+".");
+//                System.out.println("i value in bip"+i+" "+"j value bip"+z1);
+//                System.out.println("string value broad cast ip"+value);
                 tv_brod.setText(value);
                 tv_brod.setGravity(Gravity.CENTER);
                 tv_brod.setTextSize(18);
@@ -294,7 +336,7 @@ public class ipRange extends AppCompatActivity {
                 tr.addView(tv_brod);
                 tablebrod.addView(tr);
             }
-            System.out.println("end ip"+i);
+//            System.out.println("end ip"+i);
             for(int z2=0; z2<n; z2++) {
                 endIp[z2] = broadCastIp[z2];
             }
@@ -303,7 +345,7 @@ public class ipRange extends AppCompatActivity {
 //            displaying ip calculation
             Set<String>  hash_set1 = new HashSet<String>();
             for(int z3=0; z3<n; z3++) {
-                System.out.println(endIp[z3]);
+//                System.out.println(endIp[z3]);
                 TextView tv1 = new TextView(this);
                 String value = " ";
                 for(int y1=0; y1<4; y1++) {
@@ -314,7 +356,7 @@ public class ipRange extends AppCompatActivity {
                 } else {
                     hash_set1.add(value);
                 }
-                System.out.println("end Ip in string"+value);
+//                System.out.println("end Ip in string"+value);
                 tv1.setText(value);
                 tv1.setGravity(Gravity.CENTER);
                 tv1.setTextSize(18);
