@@ -23,6 +23,7 @@
         android:id="@+id/next"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:backgroundTint="#000000"
         android:text="Next"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
