@@ -1,12 +1,18 @@
 package com.example.ipcalc;
 
+import androidx.annotation.RawRes;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.NotificationManager;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -16,13 +22,17 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Typeface;
 import android.graphics.pdf.PdfDocument;
+import android.graphics.pdf.PdfRenderer;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TableLayout;
 import android.widget.TableRow;
@@ -35,12 +45,17 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Future;
 
 import static android.Manifest.permission.MANAGE_EXTERNAL_STORAGE;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -94,6 +109,7 @@ public class ipRange extends AppCompatActivity {
 
         /*generating pdf*/
         download.setOnClickListener(new View.OnClickListener() {
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onClick(View v) {
                 try {
@@ -116,25 +132,14 @@ public class ipRange extends AppCompatActivity {
         ActivityCompat.requestPermissions(this, new String[]{WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE}, PERMISSION_REQUEST_CODE);
     }
 
+    @SuppressLint("ResourceType")
+    @RequiresApi(api = Build.VERSION_CODES.O)
     private void generatePdf(String ipAddr, int numberOfHostsBits, int newNetMask, double subNet) throws FileNotFoundException {
         if (checkPermission() == false) {
             Toast.makeText(getApplicationContext(), "Permisson denied", Toast.LENGTH_SHORT).show();
         } else {
             requestPermissions();
         }
-//        File docFolder = new File(Environment.getExternalStorageDirectory() + "/Documents");
-//        String path = Environment.getExternalStorageDirectory() .getAbsolutePath();
-//        File docFolder= new File(path);
-//        if(!docFolder.exists()) {
-//            docFolder.mkdir();
-//        }
-//
-//        String pdfname ="ipcalc.pdf";
-//
-//        File pdfFile = new File(docFolder, pdfname);
-//        FileOutputStream op = new FileOutputStream(pdfFile);
-//        Document document = new Document(PageSize.A4);
-//        PdfWriter.getInstance(docFolder, op);
 
         PdfDocument pd = new PdfDocument();
         Paint p = new Paint();
@@ -152,58 +157,72 @@ public class ipRange extends AppCompatActivity {
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         p.setTextSize(45f);
         p.setColor(Color.BLACK);
-        c.drawText("Given Ip Adress", 30, 500, p);
+        c.drawText("Given Ip Adress", pageWidth/4, 500, p);
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
         p.setTextSize(45f);
         p.setColor(Color.BLACK);
-        c.drawText(ipAddr, 60, 600, p);
+        c.drawText(ipAddr, 900, 500, p);
 
 //        p.setTextAlign(Paint.Align.LEFT);
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         p.setTextSize(45f);
         p.setColor(Color.BLACK);
-        c.drawText("Given Subnet", 30, 600, p);
+        c.drawText("Given Subnet", pageWidth/4, 600, p);
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
         p.setTextSize(45f);
         p.setColor(Color.BLACK);
-        c.drawText(String.valueOf(subNet), 60, 600, p);
+        c.drawText(String.valueOf(subNet), 900, 600, p);
 
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         p.setTextSize(45f);
         p.setColor(Color.BLACK);
-        c.drawText("New netmask", 30, 700, p);
+        c.drawText("New netmask", pageWidth/4, 700, p);
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
         p.setTextSize(45f);
         p.setColor(Color.BLACK);
-        c.drawText(String.valueOf(newNetMask), 60, 700, p);
+        c.drawText(String.valueOf(newNetMask), 900, 700, p);
 
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
         p.setTextSize(45f);
         p.setColor(Color.BLACK);
-        c.drawText("Number of host bits", 30, 800, p);
+        c.drawText("Number of host bits", pageWidth/4, 800, p);
         p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
         p.setTextSize(45f);
         p.setColor(Color.BLACK);
-        c.drawText(String.valueOf(numberOfHostsBits), 60, 800, p);
-
-
+        c.drawText(String.valueOf(numberOfHostsBits), 900, 800, p);
         pd.finishPage(myPage1);
-//        File file = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
 
+//        p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.BOLD));
+//        p.setTextSize(45f);
+//        p.setColor(Color.BLACK);
+//        c.drawText("Ip with new Netamsk", pageWidth/4, 900, p);
+//        p.setTypeface(Typeface.create(Typeface.DEFAULT, Typeface.NORMAL));
+//        p.setTextSize(45f);
+//        p.setColor(Color.BLACK);
+//        c.drawText(String.valueOf(ipAddr+ "/"+newNetMask), 900, 900, p);
+//        pd.finishPage(myPage1);
 
+        /* creating current time instance */
+//        Instant it = Instant.now().truncatedTo(ChronoUnit.MINUTES);
+//        String time_t = it.toString();
+        File file = new File(Environment.getExternalStorageDirectory(), "ipcalc.pdf");
         try {
-            if(ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
-                File docFolder = new File(Environment.getExternalStorageDirectory() + "/Documents");
-                String path = Environment.getExternalStorageDirectory() .getAbsolutePath();
-                docFolder = new File(path);
-                if(!docFolder.exists()) {
-                    docFolder.getParentFile().mkdirs();
-                }
-                pd.writeTo(new FileOutputStream(docFolder));
-            } else {
-                ActivityCompat.requestPermissions(this, new String[] {Manifest.permission.WRITE_EXTERNAL_STORAGE}, 0);
-            }
-        } catch (Exception e) {
+            pd.writeTo(new FileOutputStream(file));
+//            NotificationManager notify = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//            NotificationCompat.Builder mbuilder = new NotificationCompat.Builder(this);
+//            mbuilder.setContentTitle("ipcalc").setContentText("Downloading").setSmallIcon(R.drawable.ic_launcher_background);
+//
+//            Future<File> downloading;
+//            downloading = Ion.with(ipRange.this)
+
+            Toast t =Toast.makeText(this, "downloaded successfully", Toast.LENGTH_SHORT);
+//            LinearLayout toastL = (LinearLayout) t.getView();
+//            TextView toastTV = (TextView) toastL.getChildAt(0);
+//            toastTV.setTextSize(18);
+//            toastTV.setTextColor(Color.BLACK);
+//            t.setText(Color.BLACK);
+            t.show();
+        } catch (IOException e) {
             e.printStackTrace();
         }
         pd.close();
